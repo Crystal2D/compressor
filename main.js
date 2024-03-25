@@ -41,10 +41,10 @@ async function main ()
 
     const Application = await FS.readFile("input/js/Application.js", "utf8");
     const Window = await FS.readFile("input/js/Window.js", "utf8");
-    const BlankEngine = await FS.readFile("input/js/BlankEngine.js", "utf8");
+    const CrystalEngine = await FS.readFile("input/js/CrystalEngine.js", "utf8");
     const mainScript = await FS.readFile("input/js/main.js", "utf8");
 
-    await FS.writeFile("output/js/main.js", `${await Minify(Application)}${await Minify(Window)}${await Minify(BlankEngine)}${await Minify(mainScript)}`);
+    await FS.writeFile("output/js/main.js", `${await Minify(Application)}${await Minify(Window)}${await Minify(CrystalEngine)}${await Minify(mainScript)}`);
 
     const package = JSON.parse(await FS.readFile("input/package.json", "utf8"));
 
@@ -72,7 +72,7 @@ async function main ()
 
     const dataFiles = (await FS.readdir("input/data", { recursive : true })).filter(item => item.endsWith(".json"));
 
-    const libs = ["BlankEngine.Core"];
+    const libs = ["Crystal.Core"];
     const scripts = [];
     const shaders = [];
 

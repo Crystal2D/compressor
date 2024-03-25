@@ -1,6 +1,6 @@
 # Project Compressor
 
-This is the compressor for BlankEngine projects.<br>
+This is the compressor for Crystal projects.<br>
 This is used to decrease project size for publishing. This can also decrease load time for online projects.
 
 ## To use
@@ -14,4 +14,4 @@ This is used to decrease project size for publishing. This can also decrease loa
 - Your project lmao
 
 <br>
-Version 1f
+Version 1.1f

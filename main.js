@@ -68,7 +68,7 @@ async function main ()
         if (!(await FS.stat(`input/icon/${iconFiles[i]}`)).isDirectory()) await DupeFile(iconFiles[i], "icon", "", "\\");
     }
 
-    console.log("Compressing datas...");
+    console.log("Compressing data...");
 
     const dataFiles = (await FS.readdir("input/data", { recursive : true })).filter(item => item.endsWith(".json"));
 

@@ -14,4 +14,4 @@ This is used to decrease project size for publishing. This can also decrease loa
 - Your project lmao
 
 <br>
-Version 1.1f
+Version 1.2f

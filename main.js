@@ -46,20 +46,20 @@ async function main ()
 
     await FS.writeFile("output/js/main.js", `${await Minify(Application)}${await Minify(Window)}${await Minify(CrystalEngine)}${await Minify(mainScript)}`);
 
-    const package = JSON.parse(await FS.readFile("input/package.json", "utf8"));
+    const manifest = JSON.parse(await FS.readFile("input/manifest.json", "utf8"));
 
-    if (([null, "Untitled"]).includes(package.window.title)) package.window.title = undefined;
-    if (([null, 250]).includes(package.window.width)) package.window.width = undefined;
-    if (([null, 250]).includes(package.window.height)) package.window.height = undefined;
-    if (([null, 0]).includes(package.window.windowWidth)) package.window.windowWidth = undefined;
-    if (([null, 0]).includes(package.window.windowHeight)) package.window.windowHeight = undefined;
-    if (([null, 0]).includes(package.window.marginWidth)) package.window.marginWidth = undefined;
-    if (([null, 0]).includes(package.window.marginHeight)) package.window.marginHeight = undefined;
-    if (([null, true]).includes(package.window.resizable)) package.window.resizable = undefined;
-    if (!package.window.fullScreen) package.window.fullScreen = undefined;
-    if (([null, true]).includes(package.window.fillWindow)) package.window.fillWindow = undefined;
+    if (([null, "Untitled"]).includes(manifest.window.title)) manifest.window.title = undefined;
+    if (([null, 250]).includes(manifest.window.width)) manifest.window.width = undefined;
+    if (([null, 250]).includes(manifest.window.height)) manifest.window.height = undefined;
+    if (([null, 0]).includes(manifest.window.windowWidth)) manifest.window.windowWidth = undefined;
+    if (([null, 0]).includes(manifest.window.windowHeight)) manifest.window.windowHeight = undefined;
+    if (([null, 0]).includes(manifest.window.marginWidth)) manifest.window.marginWidth = undefined;
+    if (([null, 0]).includes(manifest.window.marginHeight)) manifest.window.marginHeight = undefined;
+    if (([null, true]).includes(manifest.window.resizable)) manifest.window.resizable = undefined;
+    if (!manifest.window.fullScreen) manifest.window.fullScreen = undefined;
+    if (([null, true]).includes(manifest.window.fillWindow)) manifest.window.fillWindow = undefined;
 
-    await FS.writeFile("output/package.json", JSON.stringify(package));
+    await FS.writeFile("output/manifest.json", JSON.stringify(manifest));
 
     const iconFiles = await FS.readdir("input/icon", { recursive : true });
 
@@ -74,7 +74,10 @@ async function main ()
 
     const libs = ["Crystal.Core"];
     const scripts = [];
-    const shaders = [];
+    const shaders = [
+        "vertex",
+        "fragment"
+    ];
 
     for (let i = 0; i < dataFiles.length; i++)
     {
@@ -127,7 +130,7 @@ async function PassLib (lib)
 {
     const input = `input/js/libs/${lib}`;
     const output = `output/js/libs/${lib}`;
-    const data = JSON.parse(await FS.readFile(`${input}/package.json`, "utf8"));
+    const data = JSON.parse(await FS.readFile(`${input}/manifest.json`, "utf8"));
 
     console.log(`Library: ${data.name}`);
 
@@ -145,7 +148,7 @@ async function PassLib (lib)
     await FS.mkdir(output, { recursive : true });
 
     await FS.writeFile(`${output}/main.js`, mainScript);
-    await FS.writeFile(`${output}/package.json`, JSON.stringify(data));
+    await FS.writeFile(`${output}/manifest.json`, JSON.stringify(data));
 }
 
 async function DupeFile (file, dir, extension, splitter)

@@ -1,8 +1,10 @@
 const FS = require("fs/promises");
 const SyncFS = require("fs");
 const { minify } = require("terser");
+const path = require("path");
 
 
+const inputPath = path.normalize(process.argv[2] ?? "");
 const minifyConfig = {
     compress: {
         dead_code: true,
@@ -28,25 +30,36 @@ const minifyConfig = {
 
 async function main ()
 {
-    console.log("Getting output ready...");
+    if (process.argv[2] == null)
+    {
+        console.log("\x1b[1m\x1b[31m", `Please specify an input path\x1b[0m`);
+        console.log("\x1b[36m", `node main.js \x1b[35m"<put-ur-damn-project-path-here>"\x1b[0m\n`);
+
+        return;
+    }
+
+    console.log("\x1b[1m", `\nInput @ \x1b[35m"${inputPath}"`);
+
+    console.log("\x1b[0m", "\nGetting output ready...");
 
     await FS.rm("output", { recursive : true, force : true });
     await FS.mkdir("output");
 
-    console.log("Creating index...");
+    console.log("Dumping cached data...");
 
     await FS.copyFile("cached/index.html", "output/index.html");
+    await FS.copyFile("cached/cordova.js", "output/cordova.js");
 
     await FS.mkdir("output/js");
 
-    const Application = await FS.readFile("input/js/Application.js", "utf8");
-    const Window = await FS.readFile("input/js/Window.js", "utf8");
-    const CrystalEngine = await FS.readFile("input/js/CrystalEngine.js", "utf8");
-    const mainScript = await FS.readFile("input/js/main.js", "utf8");
+    const Application = await FS.readFile(`${inputPath}/js/Application.js`, "utf8");
+    const Window = await FS.readFile(`${inputPath}/js/Window.js`, "utf8");
+    const CrystalEngine = await FS.readFile(`${inputPath}/js/CrystalEngine.js`, "utf8");
+    const mainScript = await FS.readFile(`${inputPath}/js/main.js`, "utf8");
 
     await FS.writeFile("output/js/main.js", `${await Minify(Application)}${await Minify(Window)}${await Minify(CrystalEngine)}${await Minify(mainScript)}`);
 
-    const manifest = JSON.parse(await FS.readFile("input/manifest.json", "utf8"));
+    const manifest = JSON.parse(await FS.readFile(`${inputPath}/manifest.json`, "utf8"));
 
     if (([null, "Untitled"]).includes(manifest.window.title)) manifest.window.title = undefined;
     if (([null, 250]).includes(manifest.window.width)) manifest.window.width = undefined;
@@ -56,21 +69,21 @@ async function main ()
     if (([null, 0]).includes(manifest.window.marginWidth)) manifest.window.marginWidth = undefined;
     if (([null, 0]).includes(manifest.window.marginHeight)) manifest.window.marginHeight = undefined;
     if (([null, true]).includes(manifest.window.resizable)) manifest.window.resizable = undefined;
-    if (!manifest.window.fullScreen) manifest.window.fullScreen = undefined;
+    if (!manifest.window.fullscreen) manifest.window.fullscreen = undefined;
     if (([null, true]).includes(manifest.window.fillWindow)) manifest.window.fillWindow = undefined;
 
     await FS.writeFile("output/manifest.json", JSON.stringify(manifest));
 
-    const iconFiles = await FS.readdir("input/icon", { recursive : true });
+    const iconFiles = await FS.readdir(`${inputPath}/icon`, { recursive : true });
 
     for (let i = 0; i < iconFiles.length; i++)
     {
-        if (!(await FS.stat(`input/icon/${iconFiles[i]}`)).isDirectory()) await DupeFile(iconFiles[i], "icon", "", "\\");
+        if (!(await FS.stat(`${inputPath}/icon/${iconFiles[i]}`)).isDirectory()) await DupeFile(iconFiles[i], "icon", "", "\\");
     }
 
     console.log("Compressing data...");
 
-    const dataFiles = (await FS.readdir("input/data", { recursive : true })).filter(item => item.endsWith(".json"));
+    const dataFiles = (await FS.readdir(`${inputPath}/data`, { recursive : true }));
 
     const libs = ["Crystal.Core"];
     const scripts = [];
@@ -81,7 +94,16 @@ async function main ()
 
     for (let i = 0; i < dataFiles.length; i++)
     {
-        const data = JSON.parse(await FS.readFile(`input/data/${dataFiles[i]}`, "utf8"));
+        if ((await FS.stat(`${inputPath}/data/${dataFiles[i]}`)).isDirectory()) continue;
+
+        if (!dataFiles[i].endsWith(".json"))
+        {
+            await FS.copyFile(`${inputPath}/data/${dataFiles[i]}`, `output/data/${dataFiles[i]}`);
+
+            continue;
+        }
+
+        const data = JSON.parse(await FS.readFile(`${inputPath}/data/${dataFiles[i]}`, "utf8"));
 
         if (dataFiles[i] === "build.json")
         {
@@ -99,11 +121,11 @@ async function main ()
         await FS.writeFile(`output/data/${dataFiles[i]}`, JSON.stringify(data));
     }
 
-    console.log("Compressing libraries...");
+    console.log("\nCompressing libraries...");
 
     for (let i = 0; i < libs.length; i++) await PassLib(libs[i]);
 
-    console.log("Compressing scripts...");
+    console.log("\nCompressing scripts...");
 
     for (let i = 0; i < scripts.length; i++)
     {
@@ -116,23 +138,39 @@ async function main ()
 
     console.log("Adding resources...");
 
-    const imgFiles = await FS.readdir("input/img", { recursive : true });
-
-    for (let i = 0; i < imgFiles.length; i++)
+    try
     {
-        if (!(await FS.stat(`input/img/${imgFiles[i]}`)).isDirectory()) await DupeFile(imgFiles[i], "img", "", "\\");
-    }
+        const imgFiles = await FS.readdir(`${inputPath}/img`, { recursive : true });
 
-    console.log("Done!");
+        for (let i = 0; i < imgFiles.length; i++)
+        {
+            if (!(await FS.stat(`${inputPath}/img/${imgFiles[i]}`)).isDirectory()) await DupeFile(imgFiles[i], "img", "", "\\");
+        }
+    }
+    catch { }
+
+    try
+    {
+        const audioFiles = await FS.readdir(`${inputPath}/audio`, { recursive : true });
+
+        for (let i = 0; i < audioFiles.length; i++)
+        {
+            if (!(await FS.stat(`${inputPath}/audio/${audioFiles[i]}`)).isDirectory()) await DupeFile(audioFiles[i], "audio", "", "\\");
+        }
+    }
+    catch { }
+
+
+    console.log("\x1b[1m\x1b[32m", "\nDone!\n\x1b[0m");
 }
 
 async function PassLib (lib)
 {
-    const input = `input/js/libs/${lib}`;
+    const input = `${inputPath}/js/libs/${lib}`;
     const output = `output/js/libs/${lib}`;
     const data = JSON.parse(await FS.readFile(`${input}/manifest.json`, "utf8"));
 
-    console.log(`Library: ${data.name}`);
+    console.log(`    ${data.name} \x1b[36m${data.version ?? ""}\x1b[0m`);
 
     let mainScript = "";
 
@@ -149,6 +187,8 @@ async function PassLib (lib)
 
     await FS.writeFile(`${output}/main.js`, mainScript);
     await FS.writeFile(`${output}/manifest.json`, JSON.stringify(data));
+
+    for (let i = 0; i < data.preserve?.length; i++) await FS.copyFile(`${input}/${data.preserve[i]}`, `${output}/${data.preserve[i]}`);
 }
 
 async function DupeFile (file, dir, extension, splitter)
@@ -159,7 +199,7 @@ async function DupeFile (file, dir, extension, splitter)
 
     if (!SyncFS.existsSync(path)) await FS.mkdir(path, { recursive : true });
 
-    await FS.copyFile(`input/${dir}/${file}${extension}`, `output/${dir}/${file}${extension}`);
+    await FS.copyFile(`${inputPath}/${dir}/${file}${extension}`, `output/${dir}/${file}${extension}`);
 }
 
 async function Minify (input)
